@@ -61,12 +61,6 @@ def open_provision():
                 "Warnung", f"Die Provision für {name} beträgt 0.00 €. Auszahlung nicht möglich."
             )
             return
-        if current_balance < provision:
-            messagebox.showwarning(
-                "Warnung",
-                f"Der aktuelle Kassenstand beträgt nur {current_balance:.2f} €. Auszahlung nicht möglich.",
-            )
-            return
 
         if messagebox.askyesno(
             "Bestätigung",
@@ -82,6 +76,12 @@ def open_provision():
                     (provision, name),
                 )
 
+                # Eintrag in Provision hinzufügen
+                cursor.execute(
+                    "INSERT INTO Provisionen (Datum, Betrag, Mitarbeiter) VALUES (DATE('now'), ?, ?)",
+                    (provision, name),
+                )
+
                 conn.commit()
 
                 # Erfolgsmeldung
@@ -90,11 +90,8 @@ def open_provision():
                 )
 
                 # Provision auf 0 setzen
-                cursor.execute(
-                    "UPDATE Kassenbuch SET Betrag = 0 WHERE Mitarbeiter = ? AND Typ = 'Einnahme'",
-                    (name,),
-                )
-                conn.commit()
+                provision = provision - provision
+
                 populate_table()  # Tabelle aktualisieren
             except Exception as e:
                 messagebox.showerror("Fehler", f"Fehler beim Auszahlen der Provision: {e}")
